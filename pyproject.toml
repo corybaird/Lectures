@@ -8,6 +8,8 @@ dependencies = [
     "en-core-web-sm",
     "fastparquet>=2024.11.0",
     "groq>=0.33.0",
+    "ipython>=9.3.0",
+    "ja-core-news-sm",
     "jupyter>=1.1.1",
     "lxml>=5.4.0",
     "matplotlib>=3.10.3",
@@ -30,3 +32,4 @@ dependencies = [
 
 [tool.uv.sources]
 en-core-web-sm = { url = "https://github.com/explosion/spacy-models/releases/download/en_core_web_sm-3.8.0/en_core_web_sm-3.8.0.tar.gz" }
+ja-core-news-sm = { url = "https://github.com/explosion/spacy-models/releases/download/ja_core_news_sm-3.8.0/ja_core_news_sm-3.8.0.tar.gz" }

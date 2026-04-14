@@ -2,6 +2,16 @@ import numpy as np
 import matplotlib.pyplot as plt
 import sympy as sp
 from IPython.display import display
+import os
+import re
+
+OUT_DIR = "reports/ai_todai_overview"
+os.makedirs(OUT_DIR, exist_ok=True)
+
+def save_plot(name):
+    filename = re.sub(r'[^A-Za-z0-9_]+', '_', name.lower()).strip('_') + ".png"
+    plt.savefig(os.path.join(OUT_DIR, filename), bbox_inches='tight')
+    plt.close()
 
 class LinearTransform:
     def __init__(self, w, b):
@@ -26,7 +36,7 @@ class VisualizationMixin:
         plt.grid()
         plt.legend()
         plt.title(f'Geometric Intuition: {title}')
-        plt.show()
+        save_plot(f'Geometric Intuition: {title}')
 
     def plot_decision_boundary(self, X, y_true, w, b, title):
         colors = ['red' if y == 1 else 'blue' for y in y_true]
@@ -52,7 +62,7 @@ class VisualizationMixin:
         plt.ylim(y_min, y_max)
         plt.legend()
         plt.title(title)
-        plt.show()
+        save_plot(title)
         
     def plot_weight_tracking(self, epochs_list, w_hist, b_hist, X, y_true):
         fig, axes = plt.subplots(1, len(epochs_list), figsize=(15, 4))
@@ -78,7 +88,7 @@ class VisualizationMixin:
             ax.set_ylim(y_min, y_max)
             ax.set_title(f"Epoch {ep_num}")
         plt.tight_layout()
-        plt.show()
+        save_plot("weight_tracking_per_epoch")
         
     def plot_loss_curve(self, epochs, losses, title):
         plt.figure(figsize=(8, 4))
@@ -87,7 +97,7 @@ class VisualizationMixin:
         plt.ylabel('Mean Squared Error')
         plt.title(title)
         plt.grid(True, linestyle='--', alpha=0.7)
-        plt.show()
+        save_plot(title)
 
 
 w_sym = sp.Matrix([[1.5, 0.5], [-0.5, 1.0]])
@@ -172,25 +182,12 @@ perceptron_2 = PerceptronDemo(x=X_students, y_true=y_students, lr=0.1, epochs=20
 perceptron_2.run()
 
 
-import numpy as np
-import matplotlib.pyplot as plt
-
-class PerceptronDemo:
-    def __init__(self, x, y_true, lr=0.1, epochs=10):
-        self.X = x
-        self.y_true = y_true
-        self.lr = lr
-        self.epochs = epochs
-        # Start with intentionally 'bad' weights so we can watch it learn
-        self.w = np.array([2.0, -3.0]) 
-        self.b = np.array([2.0])
-        
-    def forward(self, x):
-        return np.dot(x, self.w) + self.b[0]
-
 class EpochWeightTracker(PerceptronDemo):
     def __init__(self, x, y_true, lr=0.1, epochs=10):
-        super().__init__(x, y_true, lr, epochs)
+        super().__init__(x, y_true, lr, epochs, title="Parameter Values After Each Epoch")
+        # Start with intentionally 'bad' weights so we can watch it learn
+        self.w = np.array([2.0, -3.0]) 
+        self.b = np.array(2.0)
         self.epoch_w_history = []
         self.epoch_b_history = []
 
@@ -207,7 +204,7 @@ class EpochWeightTracker(PerceptronDemo):
             
             # Save state at the end of the epoch
             self.epoch_w_history.append(self.w.copy())
-            self.epoch_b_history.append(self.b[0])
+            self.epoch_b_history.append(float(np.squeeze(self.b)))
         
         self.plot_results()
 
@@ -259,7 +256,7 @@ class EpochWeightTracker(PerceptronDemo):
         ax2.legend(bbox_to_anchor=(1.05, 1), loc='upper left')
         
         plt.tight_layout()
-        plt.show()
+        save_plot(self.title)
 
 # --- Execution ---
 
@@ -343,40 +340,15 @@ backprop_2 = BackpropagationDemo(x=X_cars, y_true=y_cars, lr=0.0001, epochs=100,
 backprop_2.run()
 
 
-import numpy as np
-import matplotlib.pyplot as plt
-
-# Mocking the base class for completeness
-class LinearTransform:
-    def __init__(self, w, b):
-        self.w = w
-        self.b = b
-        
-    def forward(self, x):
-        # x is expected to be shape (features, N)
-        return np.dot(self.w, x) + self.b
-
-class BackpropagationTracker(LinearTransform):
+class BackpropagationTracker(BackpropagationDemo):
     def __init__(self, x, y_true, lr=0.001, epochs=50, title='Backpropagation Demo'):
-        X_arr = np.atleast_2d(x)
-        num_features = X_arr.shape[1]
-        
-        np.random.seed(42)
-        w_init = np.random.randn(num_features) * 0.1
-        b_init = 0.0
-        super().__init__(w=w_init, b=b_init)
-        
-        self.x = X_arr
-        self.y_true = np.array(y_true)
-        self.lr = lr
-        self.epochs = epochs
-        self.title = title
-        
+        super().__init__(x, y_true, lr, epochs, title)
         # Tracking lists
         self.loss_hist = []
         self.w_hist = []
         self.b_hist = []
         self.pred_hist = [] # Track predictions at specific epochs
+        self.x = self.X  # Alias used in run()
 
     def run(self):
         N = self.x.shape[0]
@@ -456,7 +428,7 @@ class BackpropagationTracker(LinearTransform):
 
         plt.suptitle(self.title, fontsize=16, y=1.05)
         plt.tight_layout()
-        plt.show()
+        save_plot(self.title)
 
 # --- Execution ---
 
@@ -472,3 +444,96 @@ y_houses = 10.0 * rooms - 0.5 * age + 50.0 + np.random.randn(N)*2.0
 # Running the tracker
 tracker = BackpropagationTracker(x=X_houses, y_true=y_houses, lr=0.002, epochs=50, title='Backprop: House Prices (Tracking)')
 tracker.run()
+
+
+class PerceptronVsBackprop:
+    def __init__(self, x, y_true, lr_perc=0.1, lr_bp=0.01, epochs=20):
+        self.X = np.atleast_2d(x)
+        self.y_true = np.array(y_true)
+        self.epochs = epochs
+        self.lr_perc = lr_perc
+        self.lr_bp = lr_bp
+        
+        num_features = self.X.shape[1]
+        np.random.seed(42)
+        # Use exact same starting weights for a fair side-by-side comparison
+        self.w_init = np.random.randn(num_features) * 0.1
+        self.b_init = 0.0
+
+    def run_comparison(self):
+        N = len(self.X)
+        
+        # 1. Perceptron Training (Discrete Error Correction)
+        w_p, b_p = self.w_init.copy(), self.b_init
+        p_w_hist = [w_p.copy()]
+        
+        for _ in range(self.epochs):
+            for i, x_i in enumerate(self.X):
+                # Perceptron forward pass (Threshold step function)
+                z = np.dot(w_p, x_i) + b_p
+                y_pred = 1 if z >= 0 else 0
+                error = self.y_true[i] - y_pred
+                if error != 0:
+                    # Instant discrete step towards the exact error
+                    w_p += self.lr_perc * error * x_i
+                    b_p += self.lr_perc * error
+            p_w_hist.append(w_p.copy())
+            
+        # 2. Backpropagation / Gradient Descent (Continuous MSE Loss)
+        w_b, b_b = self.w_init.copy(), self.b_init
+        b_w_hist = [w_b.copy()]
+        
+        for _ in range(self.epochs):
+            # Forward pass across all samples
+            preds = np.array([np.dot(w_b, x_i) + b_b for x_i in self.X])
+            error = preds - self.y_true
+            
+            # Smooth gradient computation over the entire batch
+            grad_w = (2/N) * np.dot(error, self.X)
+            grad_b = (2/N) * np.sum(error)
+            
+            # Continuous proportional gradient update
+            w_b -= self.lr_bp * grad_w
+            b_b -= self.lr_bp * grad_b
+            
+            b_w_hist.append(w_b.copy())
+            
+        self.plot_comparison(np.array(p_w_hist), np.array(b_w_hist))
+
+    def plot_comparison(self, p_hist, b_hist):
+        fig, (ax1, ax2) = plt.subplots(1, 2, figsize=(14, 5))
+        epochs = np.arange(len(p_hist))
+        
+        # Feature 1 Weight trajectory
+        ax1.plot(epochs, p_hist[:, 0], 'r-o', label='Perceptron $w_1$ (Erratic Jumps)', zorder=5)
+        ax1.plot(epochs, b_hist[:, 0], 'b-s', label='Backprop $w_1$ (Smooth Gradients)', zorder=4)
+        ax1.set_title("Weight 1 Geometry: Jumps vs. Smooth Descent")
+        ax1.set_xlabel("Epoch")
+        ax1.set_ylabel("Weight Value")
+        ax1.legend()
+        ax1.grid(True, alpha=0.3)
+        
+        # Feature 2 Weight trajectory
+        ax2.plot(epochs, p_hist[:, 1], 'r-o', label='Perceptron $w_2$')
+        ax2.plot(epochs, b_hist[:, 1], 'b-s', label='Backprop $w_2$')
+        ax2.set_title("Weight 2 Geometry: Jumps vs. Smooth Descent")
+        ax2.set_xlabel("Epoch")
+        ax2.set_ylabel("Weight Value")
+        ax2.legend()
+        ax2.grid(True, alpha=0.3)
+        
+        plt.suptitle("Algorithm Geometry: Discrete Error Correction (Perceptron) vs. Smooth Gradient Optimization (Backprop)", fontsize=14)
+        plt.tight_layout()
+        save_plot("Algorithm_Geometry_Perceptron_vs_Backprop")
+
+# --- Execution ---
+np.random.seed(42)
+
+# Setup a 'messy' dataset where classes are overlapping slightly.
+# This prevents Perceptron from ever perfectly solving it (causing thrashing) vs. Backprop finding optimal best fit.
+X_comp = np.random.randn(50, 2)
+target_logic = X_comp[:, 0] + X_comp[:, 1] + np.random.randn(50) * 0.8
+y_comp = np.where(target_logic > 0, 1, 0)
+
+comparison = PerceptronVsBackprop(X_comp, y_comp, lr_perc=0.1, lr_bp=0.1, epochs=30)
+comparison.run_comparison()

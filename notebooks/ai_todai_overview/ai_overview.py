@@ -583,3 +583,134 @@ y_comp = np.where(target_logic > 0, 1, 0)
 
 comparison = PerceptronVsBackprop(X_comp, y_comp, lr_perc=0.1, lr_bp=0.1, epochs=30)
 comparison.run_comparison()
+# =====================================================================
+# 4. CONVOLUTIONAL NEURAL NETWORKS (2012)
+# =====================================================================
+# Instead of plugging every single pixel into a dense line of transformations, 
+# Convolutional Neural Networks (CNNs) scan patches dynamically using much smaller, 
+# shared 'Filters'. This captures specific spatial structures (edges, corners) globally 
+# and proved that Deep Learning scaling via GPUs could crush traditional image tasks (see: AlexNet, 2012).
+class CNNDemo:
+    def __init__(self, title="CNN: Edge Detection on MNIST"):
+        from sklearn.datasets import load_digits
+        digits = load_digits()
+        self.image = digits.images[0] / 16.0
+        self.filter = np.array([
+            [1, -1],
+            [1, -1]
+        ])
+        self.title = title
+
+    def run(self):
+        h, w = self.image.shape
+        fh, fw = self.filter.shape
+        output = np.zeros((h - fh + 1, w - fw + 1))
+        for i in range(output.shape[0]):
+            for j in range(output.shape[1]):
+                patch = self.image[i:i+fh, j:j+fw]
+                output[i, j] = np.sum(patch * self.filter)
+                
+        fig, axes = plt.subplots(1, 3, figsize=(12, 4))
+        axes[0].imshow(self.image, cmap='Blues')
+        axes[0].set_title('Original 8x8 Image')
+        axes[1].imshow(self.filter, cmap='Oranges')
+        axes[1].set_title('2x2 Edge Filter')
+        axes[2].imshow(output, cmap='Greens')
+        axes[2].set_title('7x7 Convoluted Feature Map')
+        plt.suptitle(self.title, fontsize=14)
+        plt.tight_layout()
+        save_plot(self.title)
+
+cnn_demo = CNNDemo()
+cnn_demo.run()
+
+
+# =====================================================================
+# 5. RECURRENT NEURAL NETWORKS / LSTMs (2014-2016)
+# =====================================================================
+# To handle sequenced arrays (like spoken sentences), Recurrent Neural Networks (RNNs) 
+# were designed with literal memory banks. A hidden representation matrix calculates 
+# its new output dynamically based on BOTH the current token and what was processed 
+# dynamically in the previous tick of time.
+class RNNDemo:
+    def __init__(self, title="RNN: Flight Passengers Forecasting"):
+        import seaborn as sns
+        flights = sns.load_dataset('flights')
+        passengers = flights['passengers'].values.astype(float)
+        norm_p = (passengers - np.min(passengers)) / (np.max(passengers) - np.min(passengers))
+        self.sequence = norm_p[:60]
+        
+        self.transform_x = LinearTransform(w=[[0.8], [-0.5]], b=[0.0, 0.0])
+        self.transform_h = LinearTransform(w=[[0.7, 0.1], [-0.1, 0.6]], b=[0.1, -0.1])
+        self.title = title
+
+    def run(self):
+        hidden_states = []
+        hidden = np.array([0.0, 0.0])
+        for x_scalar in self.sequence:
+            x_t = np.array([x_scalar])
+            z = self.transform_x.forward(x_t) + self.transform_h.forward(hidden)
+            hidden = np.tanh(z)
+            hidden_states.append(hidden)
+            
+        hidden_states = np.array(hidden_states)
+        plt.figure(figsize=(9, 5))
+        plt.plot(self.sequence, label='Normalized Passengers (Input)', color='black', linestyle='--', linewidth=2)
+        plt.plot(hidden_states[:, 0], label='Hidden Node 1 (Learned Trend)', marker='s', alpha=0.7)
+        plt.plot(hidden_states[:, 1], label='Hidden Node 2 (Learned Seasonality)', marker='^', alpha=0.7)
+        plt.title(self.title)
+        plt.xlabel('Time Sequence (Months)')
+        plt.ylabel('Signal Intensity')
+        plt.grid(True, linestyle=':', alpha=0.6)
+        plt.legend()
+        plt.tight_layout()
+        save_plot(self.title)
+
+rnn_demo = RNNDemo()
+rnn_demo.run()
+
+
+# =====================================================================
+# 6. TRANSFORMERS (2017)
+# =====================================================================
+# Transformers proved RNN-style memory was a sequential gridlock bottleneck! 
+# Their breakthrough lies in mapping sequence tokens indiscriminately in parallel 
+# via 'Attention'. They evaluate every piece of an input against every other piece, 
+# calculating a massive relational proximity score grid dynamically against Query, Key, and Value components.
+class TransformerDemo:
+    def __init__(self, title="Transformer: Self-Attention Map"):
+        self.x = np.array([
+            [1.0, 0.0, 0.1], 
+            [0.1, 0.9, 0.1], 
+            [0.2, 0.1, 0.8], 
+            [0.9, 0.2, 0.0]  
+        ])
+        self.q_proj = LinearTransform(w=np.eye(3) * 0.5, b=[0]*3)
+        self.k_proj = LinearTransform(w=np.eye(3) * 0.5, b=[0]*3)
+        self.title = title
+
+    def run(self):
+        Q = np.array([self.q_proj.forward(row) for row in self.x])
+        K = np.array([self.k_proj.forward(row) for row in self.x])
+        
+        scores = np.dot(Q, K.T) / np.sqrt(3)
+        exp_scores = np.exp(scores - np.max(scores, axis=1, keepdims=True))
+        attn_w = exp_scores / np.sum(exp_scores, axis=1, keepdims=True)
+        
+        words = ["The", "cat", "sat", "down"]
+        
+        plt.figure(figsize=(6,5))
+        plt.imshow(attn_w, cmap='magma')
+        for i in range(len(words)):
+            for j in range(len(words)):
+                plt.text(j, i, f'{attn_w[i, j]:.2f}', ha="center", va="center", color="black" if attn_w[i,j] > 0.5 else "white")
+        plt.colorbar(label='Self-Attention Relational Weight')
+        plt.xticks(range(len(words)), words)
+        plt.yticks(range(len(words)), words)
+        plt.title(self.title)
+        plt.ylabel('Token Querying Context')
+        plt.xlabel('Token Being Attended To')
+        save_plot(self.title)
+
+transformer_demo = TransformerDemo()
+transformer_demo.run()

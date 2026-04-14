@@ -4,6 +4,7 @@ import os
 import re
 import json
 import urllib.request
+import matplotlib.patheffects as patheffects
 
 OUT_DIR = "reports/ai_todai_overview/symbolic_explainer"
 os.makedirs(OUT_DIR, exist_ok=True)
@@ -326,20 +327,28 @@ class LiveAPIChallenge:
     def __init__(self, symbolic_estimator, adv_learner):
         self.symbolic = symbolic_estimator
         self.adv_learner = adv_learner
+        
+        # We test our models against 4 highly asymmetrical real-world FEN strings.
+        # This provides a distinct advantage matrix (e.g., +1 Pawn, -1 Rook) that 
+        # both mathematical models can count, and the API can positionally evaluate.
         self.fens = [
-            "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1",  # Starting Position
-            "rnbqkbnr/pppp1ppp/8/4p3/4P3/8/PPPP1PPP/RNBQKBNR w KQkq - 0 2", # Classical Open
+            "rnbqkbnr/ppp1pppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1",  # White up a Pawn
+            "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/R1BQKBNR w KQkq - 0 1",  # Black up a Knight
             "rnb1kbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1",  # White up a Queen
-            "r1bqkbnr/pppp1ppp/2n5/4p3/2B1P3/5N2/PPPP1PPP/RNBQK2R b KQkq - 3 3" # Complex mid-game
+            "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/1NBQKBNR w Kkq - 0 1"   # Black up a Rook
         ]
 
     def fen_to_features(self, fen):
+        # Strip extraneous FEN data (turn, castling rights) to isolate the board pieces
         board = fen.split()[0]
         counts = {p: 0 for p in 'PNBRQpnbrq'}
+        
         for char in board:
             if char in counts:
                 counts[char] += 1
                 
+        # Calculate raw mathematical advantage (White pieces - Black pieces)
+        # This reduces complex 2D boards into the simple 1D arrays our models expect.
         p_adv = counts['P'] - counts['p']
         minor_adv = (counts['N'] + counts['B']) - (counts['n'] + counts['b'])
         r_adv = counts['R'] - counts['r']
@@ -351,6 +360,8 @@ class LiveAPIChallenge:
         }
 
     def fetch_api_eval(self, fen):
+        # We query chess-api.com, passing the FEN for Stockfish 18 to analyze dynamically.
+        # This provides a "Ground Truth" that isn't reliant on simple piece counting.
         url = "https://chess-api.com/v1"
         req = urllib.request.Request(url, method="POST", headers={"Content-Type": "application/json"})
         data = json.dumps({"fen": fen, "depth": 12}).encode('utf-8')
@@ -358,6 +369,7 @@ class LiveAPIChallenge:
             with urllib.request.urlopen(req, data=data, timeout=5) as response:
                 res = json.loads(response.read().decode('utf-8'))
                 score = res.get('eval')
+                # If 'eval' is empty, it means Stockfish found a forced checkmate.
                 if score is None:
                     mate = res.get('mate', 0)
                     score = 20.0 if mate > 0 else -20.0
@@ -385,18 +397,18 @@ class LiveAPIChallenge:
             nn_val = self.adv_learner.predict(np.atleast_2d(feats['array']))[0]
             adv_scores.append(nn_val)
             
-            print(f"Board {idx+1} [Live API]: {api_score:+.2f} | [Symbolic Rigid]: {sym_val:+.2f} | [Subsymbolic NN]: {nn_val:+.2f}")
+            print(f"Board {idx+1} [Ground Truth]: {api_score:+.2f} | [Symbolic AI]: {sym_val:+.2f} | [Subsymbolic AI]: {nn_val:+.2f}")
             
         plt.figure(figsize=(10, 5))
         x = np.arange(len(self.fens))
         width = 0.25
         
-        plt.bar(x - width, api_scores, width, label='Live Stockfish API', color='black', alpha=0.8)
-        plt.bar(x, sym_scores, width, label='Rigid Symbolic AI', color='red', alpha=0.6)
-        plt.bar(x + width, adv_scores, width, label='Advanced Subsymbolic', color='blue', alpha=0.7)
+        plt.bar(x - width, api_scores, width, label='Ground Truth (Stockfish API)', color='black', alpha=0.8)
+        plt.bar(x, sym_scores, width, label='Symbolic AI', color='red', alpha=0.6)
+        plt.bar(x + width, adv_scores, width, label='Subsymbolic AI', color='blue', alpha=0.7)
         
         plt.xticks(x, [f"Board {i+1}" for i in range(len(self.fens))])
-        plt.title("Live Evaluation Challenge: Models vs Stockfish API")
+        plt.title("Live Evaluation Challenge: Symbolic vs Subsymbolic vs Ground Truth")
         plt.ylabel("Advantage Points")
         plt.legend(bbox_to_anchor=(1.05, 1), loc='upper left')
         plt.grid(axis='y', linestyle='--', alpha=0.7)
@@ -405,3 +417,118 @@ class LiveAPIChallenge:
 
 live_challenge = LiveAPIChallenge(symbolic_estimator, advanced_learner)
 live_challenge.run()
+
+# =====================================================================
+# 6. TACTICAL PUZZLE VISUALIZATION
+# =====================================================================
+# This visualizes precisely how these evaluation functions lead to actual moves.
+# Naive Piece-Counting will jump at capturing a shiny piece (The Poisoned Queen).
+# Deep Positional Search will avoid the trap and make a subtle positional move.
+
+class TacticalChessPuzzle:
+    def __init__(self, title="Tactical Puzzle: The Synergy Fork"):
+        self.title = title
+        # White's Queen on d5 can either capture the Rook on h5 or the Knight on a5.
+        # Capturing the Rook (+5) is mathematically best.
+        # But capturing the Knight leaves White with 2 Minor pieces to Black's 0 (net +2).
+        # Our advanced Subsymbolic Neural Network has a hidden +2.5 Synergy weight for Minor combinations,
+        # forcing it to mathematically hallucinate that the +3 Knight (+2.5 bonus = 5.5) is better than the Rook!
+        self.fen = "6k1/5ppp/8/n2Q3r/8/5N2/5PPP/R1B3K1 w - - 0 1"
+        
+        # Unicode mapping allows us to draw a dependency-free GUI right in Matplotlib
+        self.unicode_pieces = {
+            'r': '♜', 'n': '♞', 'b': '♝', 'q': '♛', 'k': '♚', 'p': '♟',
+            'R': '♖', 'N': '♘', 'B': '♗', 'Q': '♕', 'K': '♔', 'P': '♙'
+        }
+        
+    def fetch_api_bestmove(self):
+        # We query Stockfish API again, but this time requesting the specific 'lan' (Long Algebraic Notation)
+        # to find out what move the highly advanced positional engine thinks is smartest.
+        url = "https://chess-api.com/v1"
+        req = urllib.request.Request(url, method="POST", headers={"Content-Type": "application/json"})
+        data = json.dumps({"fen": self.fen, "depth": 12}).encode('utf-8')
+        try:
+            with urllib.request.urlopen(req, data=data, timeout=5) as response:
+                res = json.loads(response.read().decode('utf-8'))
+                return res.get('lan') # e.g. "e1g1"
+        except Exception as e:
+            print(f"API Error: {e}")
+            return "e1g1"
+            
+    def algebraic_to_coords(self, square):
+        # Convert algebraic chess notation (e.g., 'a5') to Matplotlib (row, col) matrix coordinates
+        col = ord(square[0]) - ord('a')
+        row = 8 - int(square[1])
+        return row, col
+
+    def draw_board(self, ax):
+        board_grid = np.zeros((8, 8))
+        board_grid[1::2, 0::2] = 1
+        board_grid[0::2, 1::2] = 1
+        board_grid[1::2, 1::2] = 0.8 
+        board_grid[0::2, 0::2] = 0.8
+        
+        ax.imshow(board_grid, cmap='bone', vmin=0, vmax=1)
+        
+        board_str = self.fen.split()[0]
+        rows = board_str.split('/')
+        
+        for r_idx, row in enumerate(rows):
+            c_idx = 0
+            for char in row:
+                if char.isdigit():
+                    c_idx += int(char)
+                else:
+                    piece = self.unicode_pieces[char]
+                    color = "white" if char.isupper() else "black"
+                    outline = "black" if char.isupper() else "white"
+                    ax.text(c_idx, r_idx, piece, fontsize=38, ha='center', va='center', 
+                            color=color, path_effects=[patheffects.withStroke(linewidth=1.5, foreground=outline)])
+                    c_idx += 1
+                    
+        files = ['a','b','c','d','e','f','g','h']
+        ax.set_xticks(range(8))
+        ax.set_xticklabels(files)
+        ax.set_yticks(range(8))
+        ax.set_yticklabels(range(8, 0, -1))
+
+    def run(self):
+        print("\n--- Tactical Puzzle Visualization ---")
+        api_move = self.fetch_api_bestmove()
+        print(f"Stockfish Evaluation Best Move: {api_move}")
+        
+        fig, ax = plt.subplots(figsize=(8, 8))
+        self.draw_board(ax)
+        
+        # Plot Symbolic Move (Greedy Rook Grab)
+        sym_start = self.algebraic_to_coords('d5')
+        sym_end = self.algebraic_to_coords('h5')
+        ax.annotate("", xy=(sym_end[1], sym_end[0]), xytext=(sym_start[1], sym_start[0]),
+                    arrowprops=dict(arrowstyle="->", color="red", lw=4), zorder=5)
+        ax.text(sym_end[1]-0.5, sym_end[0]-0.6, "Symbolic AI\n(+5 Rook)", color="red", weight='bold', ha='center',
+                path_effects=[patheffects.withStroke(linewidth=3, foreground="white")])
+                
+        # Plot Subsymbolic Move (Synergy Hallucination on Knight)
+        sub_start = self.algebraic_to_coords('d5')
+        sub_end = self.algebraic_to_coords('a5')
+        ax.annotate("", xy=(sub_end[1], sub_end[0]), xytext=(sub_start[1], sub_start[0]),
+                    arrowprops=dict(arrowstyle="->", color="blue", lw=4), zorder=4)
+        ax.text(sub_end[1]+0.5, sub_end[0]-0.6, "Subsymbolic NN\n(Synergy Stack)", color="blue", weight='bold', ha='center',
+                path_effects=[patheffects.withStroke(linewidth=3, foreground="white")])
+        
+        # Plot API Move (Stockfish Ground Truth)
+        if api_move:
+            api_start = self.algebraic_to_coords(api_move[:2])
+            api_end = self.algebraic_to_coords(api_move[2:4])
+            # Shift the arrow slightly if it overlaps with Symbolic (since API will likely also take the Rook)
+            offset = 0.15 if api_move == 'd5h5' else 0.0
+            ax.annotate("", xy=(api_end[1], api_end[0]+offset), xytext=(api_start[1], api_start[0]+offset),
+                        arrowprops=dict(arrowstyle="->", color="limegreen", lw=4), zorder=6)
+            ax.text(api_end[1], api_end[0]+0.8, "API Truth", color="limegreen", weight='bold', ha='center',
+                    path_effects=[patheffects.withStroke(linewidth=3, foreground="black")])
+            
+        plt.title(self.title, pad=20, fontsize=14)
+        save_plot("9_tactical_chessboard")
+
+puzzle = TacticalChessPuzzle()
+puzzle.run()

@@ -133,6 +133,14 @@ visualizer_2 = VectorVisualizer(w_matrix=[[0.5, -0.2], [0.1, 0.5]], b_vector=[0.
 visualizer_2.run()
 
 
+# =====================================================================
+# 1. PERCEPTRON (1958)
+# =====================================================================
+# The Perceptron is the genesis of artificial neural networks.
+# Mathematically, it operates precisely like a standard Linear Transformation
+# (Wx + b) followed by a discrete step function threshold (z >= 0).
+# Geometric Intuition: A single perceptron tries to draw a straight line
+# (decision boundary) perfectly splitting two classes of data in space.
 class PerceptronDemo(LinearTransform, VisualizationMixin):
     def __init__(self, x, y_true, lr=0.1, epochs=10, title='Perceptron Visual Decision Boundary'):
         X_arr = np.atleast_2d(x)
@@ -152,24 +160,31 @@ class PerceptronDemo(LinearTransform, VisualizationMixin):
             for i, x_i in enumerate(self.X):
                 #print(x_i)
                 # Calculate perceptron prediction
-                z = self.forward(x_i)
+                z = self.forward(x_i)  # Linear Transform: Wx + b
                 #print(z)
-                y_pred = 1 if z >= 0 else 0
-                error = self.y_true[i] - y_pred
+                y_pred = 1 if z >= 0 else 0  # Step Function Threshold
+                error = self.y_true[i] - y_pred  # Error: 0 if correct, non-zero if wrong
                 
                 # Perceptron learning rule: update weights if prediction is wrong
                 if error != 0:
-                    self.w += self.lr * error * x_i
-                    self.b += self.lr * error
+                    self.w += self.lr * error * x_i  # Update weight vector
+                    self.b += self.lr * error  # Update bias scalar
                     
         self.plot_decision_boundary(self.X, self.y_true, self.w, self.b, self.title)
 
 
+# --- Example 1: Learning the AND Logic Gate ---
+# Unlike passing explicit boundary weights, we start with random weights.
+# The Perceptron uses the Perceptron Learning Rule to iteratively adjust 
+# weights using discrete error corrections against target labels.
 X_and = np.array([[0.0, 0.0], [0.0, 1.0], [1.0, 0.0], [1.0, 1.0]])
 y_and = np.array([0, 0, 0, 1])
 perceptron_1 = PerceptronDemo(x=X_and, y_true=y_and, lr=0.1, epochs=10, title='Perceptron: Learned AND Gate')
 perceptron_1.run()
 
+# --- Example 2: Pass/Fail classification ---
+# Training a perceptron on a linearly separable physical dataset forecasting 
+# whether a student passes based on hours studied vs hours continuously slept.
 np.random.seed(42)
 N = 40
 study_hours = np.random.uniform(0, 10, N)
@@ -182,6 +197,11 @@ perceptron_2 = PerceptronDemo(x=X_students, y_true=y_students, lr=0.1, epochs=20
 perceptron_2.run()
 
 
+# =====================================================================
+# Epoch Weight Tracker (Visualizing Parameter Updates)
+# =====================================================================
+# This tracks how the weights (w) and bias (b) jump around across epochs 
+# using the discrete 'instant error' corrections of the Perceptron.
 class EpochWeightTracker(PerceptronDemo):
     def __init__(self, x, y_true, lr=0.1, epochs=10):
         super().__init__(x, y_true, lr, epochs, title="Parameter Values After Each Epoch")
@@ -282,6 +302,14 @@ tracker1 = EpochWeightTracker(X_dummy, y_dummy, lr=0.05, epochs=10)
 tracker1.run_with_tracking()
 
 
+# =====================================================================
+# 2. BACKPROPAGATION (1986)
+# =====================================================================
+# Backpropagation relies on gradient descent. Instead of instantly jumping 
+# weights when a prediction is wrong (like the perceptron), it calculates 
+# the continuous Mean Squared Error over the dataset. 
+# It takes small, proportional steps down the loss gradient, allowing 
+# it to smoothly contour to complex, noisy data without thrashing.
 class BackpropagationDemo(LinearTransform, VisualizationMixin):
     def __init__(self, x, y_true, lr=0.01, epochs=50, title='Backprop Training'):
         X_arr = np.atleast_2d(x)
@@ -301,24 +329,26 @@ class BackpropagationDemo(LinearTransform, VisualizationMixin):
         N = len(self.X)
         for ep in range(self.epochs):
             # Forward pass
-            predictions = np.array([self.forward(x_i) for x_i in self.X]).flatten()
+            predictions = np.array([self.forward(x_i) for x_i in self.X]).flatten()  # Get all predictions
             
             # Mean Squared Error Loss
-            error = predictions - self.y_true
-            mse = np.mean(error**2)
+            error = predictions - self.y_true  # Continuous raw error array
+            mse = np.mean(error**2)  # Mean Squared Error computation
             losses.append(mse)
             
             # Compute gradient of MSE loss with respect to predictions
-            grad_w = (2/N) * np.dot(error, self.X)
-            grad_b = (2/N) * np.sum(error)
+            grad_w = (2/N) * np.dot(error, self.X)  # Gradient of weights
+            grad_b = (2/N) * np.sum(error)  # Gradient of bias
             
             # Gradient descent weight updates
-            self.w -= self.lr * grad_w
-            self.b -= self.lr * grad_b
+            self.w -= self.lr * grad_w  # Smooth continuous descent for weights
+            self.b -= self.lr * grad_b  # Smooth continuous descent for bias
             
         self.plot_loss_curve(self.epochs, losses, self.title)
 
 
+# --- Example 1: House Prices (Continuous Regression) ---
+# Backprop handles continuous target values to accurately find a line of best fit.
 np.random.seed(42)
 N = 100
 rooms = np.random.normal(3, 1, N)
@@ -330,6 +360,7 @@ y_houses = 10.0 * rooms - 0.5 * age + 50.0 + np.random.randn(N)*2.0
 backprop_1 = BackpropagationDemo(x=X_houses, y_true=y_houses, lr=0.001, epochs=50, title='Backprop: House Prices')
 backprop_1.run()
 
+# --- Example 2: Car Depreciation ---
 age_car = np.random.uniform(0, 20, N)
 miles_car = np.random.uniform(0, 150, N)
 X_cars = np.column_stack([age_car, miles_car])
@@ -340,6 +371,11 @@ backprop_2 = BackpropagationDemo(x=X_cars, y_true=y_cars, lr=0.0001, epochs=100,
 backprop_2.run()
 
 
+# =====================================================================
+# Backpropagation Tracker (Visualizing Smooth Gradient Descent)
+# =====================================================================
+# Visualizes the continuous, smooth updates of the weights relative to the
+# mean squared error over epochs.
 class BackpropagationTracker(BackpropagationDemo):
     def __init__(self, x, y_true, lr=0.001, epochs=50, title='Backpropagation Demo'):
         super().__init__(x, y_true, lr, epochs, title)
@@ -446,6 +482,16 @@ tracker = BackpropagationTracker(x=X_houses, y_true=y_houses, lr=0.002, epochs=5
 tracker.run()
 
 
+# =====================================================================
+# 3. ALGORITHM GEOMETRY: PERCEPTRON VS. BACKPROPAGATION
+# =====================================================================
+# Key Geometric Intuition Distinction:
+# - Perceptron (Discrete Error Correction): If it makes a mistake, it instantly 
+#   jumps the weights. Fast, but on noisy/unseparable data, it will never 
+#   converge—it thrashes back and forth forever trying to fix impossible errors.
+# - Backpropagation (Smooth Gradient Descent): Calculates the error surface for 
+#   the whole batch. Moves weights smoothly down the slope. It can find the 
+#   optimal "best fit" even when the data cannot be perfectly separated.
 class PerceptronVsBackprop:
     def __init__(self, x, y_true, lr_perc=0.1, lr_bp=0.01, epochs=20):
         self.X = np.atleast_2d(x)
@@ -475,7 +521,7 @@ class PerceptronVsBackprop:
                 error = self.y_true[i] - y_pred
                 if error != 0:
                     # Instant discrete step towards the exact error
-                    w_p += self.lr_perc * error * x_i
+                    w_p += self.lr_perc * error * x_i  # JUMPS the weight
                     b_p += self.lr_perc * error
             p_w_hist.append(w_p.copy())
             
@@ -493,7 +539,7 @@ class PerceptronVsBackprop:
             grad_b = (2/N) * np.sum(error)
             
             # Continuous proportional gradient update
-            w_b -= self.lr_bp * grad_w
+            w_b -= self.lr_bp * grad_w  # SMOOTHLY slopes the weight
             b_b -= self.lr_bp * grad_b
             
             b_w_hist.append(w_b.copy())

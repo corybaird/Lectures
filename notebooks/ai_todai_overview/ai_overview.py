@@ -642,22 +642,28 @@ class RNNDemo:
         
         self.transform_x = LinearTransform(w=[[0.8], [-0.5]], b=[0.0, 0.0])
         self.transform_h = LinearTransform(w=[[0.7, 0.1], [-0.1, 0.6]], b=[0.1, -0.1])
+        self.transform_out = LinearTransform(w=[[0.5, 0.5]], b=[0.0])
         self.title = title
 
     def run(self):
         hidden_states = []
+        predictions = []
         hidden = np.array([0.0, 0.0])
         for x_scalar in self.sequence:
             x_t = np.array([x_scalar])
             z = self.transform_x.forward(x_t) + self.transform_h.forward(hidden)
             hidden = np.tanh(z)
             hidden_states.append(hidden)
+            pred = self.transform_out.forward(hidden)
+            predictions.append(pred[0])
             
         hidden_states = np.array(hidden_states)
+        predictions = np.array(predictions)
         plt.figure(figsize=(9, 5))
         plt.plot(self.sequence, label='Normalized Passengers (Input)', color='black', linestyle='--', linewidth=2)
-        plt.plot(hidden_states[:, 0], label='Hidden Node 1 (Learned Trend)', marker='s', alpha=0.7)
-        plt.plot(hidden_states[:, 1], label='Hidden Node 2 (Learned Seasonality)', marker='^', alpha=0.7)
+        plt.plot(hidden_states[:, 0], label='Hidden Node 1 (Learned Trend)', marker='s', alpha=0.3)
+        plt.plot(hidden_states[:, 1], label='Hidden Node 2 (Learned Seasonality)', marker='^', alpha=0.3)
+        plt.plot(predictions, label='RNN Output Prediction', color='red', linewidth=3)
         plt.title(self.title)
         plt.xlabel('Time Sequence (Months)')
         plt.ylabel('Signal Intensity')
@@ -678,38 +684,44 @@ rnn_demo.run()
 # via 'Attention'. They evaluate every piece of an input against every other piece, 
 # calculating a massive relational proximity score grid dynamically against Query, Key, and Value components.
 class TransformerDemo:
-    def __init__(self, title="Transformer: Self-Attention Map"):
+    def __init__(self, title="Transformer: Pronoun Context Resolution"):
+        self.words = ["The", "animal", "didn't", "cross", "the", "street", "because", "it", "was", "tired"]
         self.x = np.array([
-            [1.0, 0.0, 0.1], 
-            [0.1, 0.9, 0.1], 
-            [0.2, 0.1, 0.8], 
-            [0.9, 0.2, 0.0]  
+            [0.1, 0.1, 0.1, 0.1], 
+            [1.0, 0.0, 0.0, 0.5], 
+            [0.1, 0.2, 0.1, 0.1], 
+            [0.2, 0.8, 0.5, 0.1], 
+            [0.1, 0.1, 0.1, 0.1], 
+            [0.0, 1.0, 0.0, 0.5], 
+            [0.1, 0.1, 0.1, 0.1], 
+            [1.0, 0.0, 0.0, 0.5], 
+            [0.1, 0.1, 0.2, 0.1], 
+            [0.8, 0.0, 0.5, 0.1], 
         ])
-        self.q_proj = LinearTransform(w=np.eye(3) * 0.5, b=[0]*3)
-        self.k_proj = LinearTransform(w=np.eye(3) * 0.5, b=[0]*3)
+        self.q_proj = LinearTransform(w=np.eye(4) * 0.8, b=[0]*4)
+        self.k_proj = LinearTransform(w=np.eye(4) * 0.8, b=[0]*4)
         self.title = title
 
     def run(self):
         Q = np.array([self.q_proj.forward(row) for row in self.x])
         K = np.array([self.k_proj.forward(row) for row in self.x])
         
-        scores = np.dot(Q, K.T) / np.sqrt(3)
+        scores = np.dot(Q, K.T) / np.sqrt(4)
         exp_scores = np.exp(scores - np.max(scores, axis=1, keepdims=True))
         attn_w = exp_scores / np.sum(exp_scores, axis=1, keepdims=True)
         
-        words = ["The", "cat", "sat", "down"]
-        
-        plt.figure(figsize=(6,5))
+        plt.figure(figsize=(8,7))
         plt.imshow(attn_w, cmap='magma')
-        for i in range(len(words)):
-            for j in range(len(words)):
-                plt.text(j, i, f'{attn_w[i, j]:.2f}', ha="center", va="center", color="black" if attn_w[i,j] > 0.5 else "white")
+        for i in range(len(self.words)):
+            for j in range(len(self.words)):
+                plt.text(j, i, f'{attn_w[i, j]:.2f}', ha="center", va="center", color="black" if attn_w[i,j] > 0.5 else "white", fontsize=8)
         plt.colorbar(label='Self-Attention Relational Weight')
-        plt.xticks(range(len(words)), words)
-        plt.yticks(range(len(words)), words)
+        plt.xticks(range(len(self.words)), self.words, rotation=45)
+        plt.yticks(range(len(self.words)), self.words)
         plt.title(self.title)
         plt.ylabel('Token Querying Context')
         plt.xlabel('Token Being Attended To')
+        plt.tight_layout()
         save_plot(self.title)
 
 transformer_demo = TransformerDemo()

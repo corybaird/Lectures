@@ -278,6 +278,27 @@ Recurring question on whether scale yields genuine intelligence
 </div>
 </div>
 
+
+---
+
+## When people say AI today: Almost always = Generative
+### Generative AI: Almost always = Transformers
+
+<ul style="margin-bottom: 12px;">
+  <li>Foundational architecture from landmark "Attention Is All You Need" paper (2017)</li>
+  <li>All major models same share architecture</li>
+</ul>
+
+<iframe src="https://sebastianraschka.com/llm-architecture-gallery/#architecture-gallery" width="100%" height="410" frameborder="0" style="border: 1px solid var(--border-color); border-radius: 6px; box-shadow: 0 4px 14px rgba(0,0,0,0.12); pointer-events: auto;" allow="fullscreen"></iframe>
+
+<p style="font-size: 0.72em; text-align: center; margin-top: 6px;">
+  <a href="https://sebastianraschka.com/llm-architecture-gallery/#architecture-gallery" target="_blank" rel="noopener noreferrer">Link: Sebastian Raschka's LLM Architecture Gallery</a>
+</p>
+
+Note:
+Interactive gallery catalogs transformer architectural variants across frontier LLMs
+All modern large models derive from the original 2017 attention mechanism
+
 ---
 
 ## Visualizing the Transformer
@@ -308,34 +329,34 @@ Recurring question on whether scale yields genuine intelligence
 
 ---
 
-<!-- .slide: data-background-iframe="https://ig.ft.com/generative-ai/" data-background-interactive -->
-
-<div style="position: absolute; top: 15px; right: 20px; background: rgba(24, 48, 89, 0.92); color: #ffffff; padding: 10px 18px; border-radius: 6px; font-size: 0.75em; backdrop-filter: blur(4px);">
-  <strong>Live FT Article:</strong> Scroll &amp; interact directly | Press <strong>&rarr;</strong> to continue
-</div>
-
----
-
-## Why General LLMs Fail in Research
+## Stochastic Parrots...???
 
 <div class="grid-2">
 <div class="card">
-<h3>Reasoning Brittleness</h3>
+<h3>LLMs: A Normal Technology</h3>
+<p style="font-size: 0.82em; font-weight: 600; color: var(--brand-navy); margin-bottom: 10px;">The Engineering Tool Perspective</p>
 <ul>
-  <li>Minor formatting variations flip conclusions</li>
-  <li>Benchmark memorization mimics genuine reasoning</li>
-  <li>Multi-step logic degrades over long sequences</li>
+  <li><strong>Core Mechanism:</strong> Statistical next-token prediction over text distributions</li>
+  <li><strong>Internal State:</strong> Surface linguistic correlations without grounded meaning</li>
+  <li><strong>Failure Mode:</strong> Confident hallucinations and brittle multi-step reasoning</li>
+  <li><strong>Practical Role:</strong> Useful cognitive artifact requiring strict verification harnesses</li>
 </ul>
 </div>
 <div class="card card-teal">
-<h3>Empirical Hallucinations</h3>
+<h3>LLMs: A Machine God</h3>
+<p style="font-size: 0.82em; font-weight: 600; color: var(--brand-teal); margin-bottom: 10px;">The Superintelligence Perspective</p>
 <ul>
-  <li>Fabricates realistic-looking data when series are missing</li>
-  <li>Generates authentic-looking citations to fake papers</li>
-  <li>Agents cheat test definitions to claim success</li>
+  <li><strong>Core Claim:</strong> Scale yields genuine emergent understanding and artificial general intelligence</li>
+  <li><strong>Internal State:</strong> Autonomous reasoning entities forming beliefs and intentionality</li>
+  <li><strong>Failure Mode:</strong> Anthropomorphic projection mistaking syntactic fluency for consciousness</li>
+  <li><strong>Practical Risk:</strong> Uncritical delegation of policy and finance decisions to black-box models</li>
 </ul>
 </div>
 </div>
+
+Note:
+Stochastic parrots debate pits statistical pattern matching against claims of emergent cognition
+Reality in research: powerful workflow accelerator devoid of autonomous understanding
 
 ---
 

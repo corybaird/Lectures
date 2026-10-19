@@ -7,16 +7,22 @@
 - Dimensions: 次元 
 - Dimension Reduction: 次元削減
 - Natural Language Processing (NLP): 自然言語処理 
-- Transformers: トランスフォーマー 
-
+- Transformers: トランスフォーマー
+- Supervised Learning: 教師あり学習
+- Unsupervised Learning: 教師なし学習
+- Tokenization: トークン化
+- Embeddings: 埋め込み
+- Neural Networks: ニューラルネットワーク
+- Attention Mechanism: アテンション機構
+- Pre-training: 事前学習
+- Fine-tuning: ファインチューニング
+- Training Data: 訓練データ
+- Model Deployment: モデルデプロイ
 
 ### Goals
 この講義では、自然言語処理（NLP）の基礎から高度なLLMまでを学びます。
-
 目標1：NLPの基礎 - テキストを処理・分析するための基本技術（「AI」モデルを含む）を学びます。
-
 目標2：LLMをゼロから構築する - 現代の大規模言語モデル（LLM）が実際にどのように機能するかを、自ら構築することによって理解します。
-
 目標3：本番コード - 実世界のアプリケーションでNLPシステムを開発・デプロイするためのベストプラクティスを学びます。
 
 

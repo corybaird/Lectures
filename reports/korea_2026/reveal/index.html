@@ -1,0 +1,307 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>AI Agents, Verification, and the Future of Research</title>
+
+  <!-- Reveal.js core CSS & Serif Theme -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/reveal.js/5.1.0/reset.min.css">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/reveal.js/5.1.0/reveal.min.css">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/reveal.js/5.1.0/theme/serif.min.css" id="theme">
+
+  <!-- Elegant Academic Fonts: Newsreader & Source Serif 4 -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Newsreader:ital,opsz,wght@0,6..72,400;0,6..72,600;0,6..72,700;1,6..72,400&family=Source+Sans+3:wght@400;600;700&display=swap" rel="stylesheet">
+
+  <!-- KaTeX for math formulas -->
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.21/dist/katex.min.css">
+
+  <style>
+    :root {
+      --r-background-color: #faf9f5;
+      --r-main-font: "Source Sans 3", -apple-system, sans-serif;
+      --r-heading-font: "Newsreader", Georgia, serif;
+      --r-main-color: #24292f;
+      --r-heading-color: #1a2733;
+      --brand-navy: #183059;
+      --brand-teal: #0d5c58;
+      --brand-slate: #232d36;
+      --card-bg: #ffffff;
+      --border-color: #e5e2da;
+    }
+
+    .reveal {
+      font-family: var(--r-main-font);
+      color: var(--r-main-color);
+      font-size: 26px;
+    }
+
+    .reveal h1, .reveal h2, .reveal h3 {
+      font-family: var(--r-heading-font);
+      color: var(--r-heading-color);
+      text-transform: none;
+      font-weight: 600;
+      letter-spacing: -0.01em;
+    }
+
+    .reveal h1 { font-size: 2.3em; line-height: 1.15; margin-bottom: 0.3em; }
+    .reveal h2 { font-size: 1.7em; line-height: 1.2; margin-bottom: 0.5em; border-bottom: 1.5px solid var(--brand-teal); padding-bottom: 10px; }
+    .reveal h3 { font-size: 1.25em; font-weight: 600; color: var(--brand-navy); margin-bottom: 0.3em; }
+
+    .reveal ul {
+      margin-left: 1.2em;
+      margin-bottom: 0.6em;
+      line-height: 1.45;
+    }
+
+    .reveal li {
+      margin-bottom: 0.45em;
+    }
+
+    .lead-card {
+      background: #ffffff;
+      border: 1px solid var(--border-color);
+      border-left: 5px solid var(--brand-navy);
+      padding: 20px 26px;
+      border-radius: 6px;
+      margin: 15px 0 25px 0;
+      font-size: 1.15em;
+      line-height: 1.45;
+      text-align: left;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.03);
+    }
+
+    .quote-card {
+      background: #ffffff;
+      border: 1px solid var(--border-color);
+      border-left: 5px solid var(--brand-teal);
+      padding: 20px 28px;
+      border-radius: 6px;
+      margin: 15px 0 25px 0;
+      font-size: 1.12em;
+      font-family: "Newsreader", Georgia, serif;
+      font-style: italic;
+      text-align: left;
+      line-height: 1.45;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.03);
+    }
+
+    .grid-2 {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 36px;
+      text-align: left;
+      align-items: start;
+    }
+
+    .grid-3 {
+      display: grid;
+      grid-template-columns: 1fr 1fr 1fr;
+      gap: 24px;
+      text-align: left;
+      align-items: start;
+    }
+
+    .grid-60-40 {
+      display: grid;
+      grid-template-columns: 3fr 2fr;
+      gap: 32px;
+      text-align: left;
+      align-items: center;
+    }
+
+    .card {
+      background: var(--card-bg);
+      border: 1px solid var(--border-color);
+      border-top: 4px solid var(--brand-navy);
+      border-radius: 6px;
+      padding: 20px;
+      box-shadow: 0 4px 14px rgba(0,0,0,0.04);
+    }
+
+    .card-teal {
+      border-top: 4px solid var(--brand-teal);
+    }
+
+    .section-break-slide {
+      background: var(--brand-slate) !important;
+      color: #faf9f5 !important;
+      text-align: center;
+    }
+
+    .section-break-slide h1 {
+      color: #faf9f5 !important;
+      font-size: 2.8em;
+      font-family: "Newsreader", Georgia, serif;
+    }
+
+    .section-break-slide h3 {
+      color: #48b8b0 !important;
+      font-size: 1.35em;
+      font-weight: 400;
+    }
+
+    .btn-action {
+      display: inline-block;
+      padding: 10px 20px;
+      background: var(--brand-navy);
+      color: #ffffff !important;
+      border-radius: 4px;
+      font-size: 0.85em;
+      font-weight: 600;
+      text-decoration: none;
+      box-shadow: 0 3px 8px rgba(0,0,0,0.12);
+      margin-top: 12px;
+    }
+
+    .btn-action:hover {
+      background: var(--brand-teal);
+    }
+
+    .diagram-box {
+      background: #ffffff;
+      border: 1px solid var(--border-color);
+      border-radius: 6px;
+      padding: 14px;
+      font-family: "SFMono-Regular", Consolas, "Liberation Mono", Menlo, monospace;
+      font-size: 0.72em;
+      line-height: 1.35;
+      color: #1e293b;
+    }
+
+    /* AI Timeline Styles */
+    .timeline-container {
+      position: relative;
+      width: 100%;
+      margin: 15px auto 0 auto;
+    }
+
+    .timeline-grid {
+      display: grid;
+      grid-template-columns: repeat(7, 1fr);
+      grid-template-rows: 175px 32px 175px;
+      gap: 0 10px;
+      width: 100%;
+      position: relative;
+    }
+
+    .timeline-axis-line {
+      grid-column: 1 / -1;
+      grid-row: 2;
+      align-self: center;
+      height: 3px;
+      background: #c2410c;
+      margin: 0 12px;
+      z-index: 1;
+    }
+
+    .timeline-dot {
+      grid-row: 2;
+      justify-self: center;
+      align-self: center;
+      width: 14px;
+      height: 14px;
+      border-radius: 50%;
+      background: var(--r-background-color, #faf9f5);
+      border: 3px solid #c2410c;
+      z-index: 2;
+      box-shadow: 0 0 0 3px rgba(194, 65, 12, 0.15);
+    }
+
+    .timeline-item-top {
+      grid-row: 1;
+      display: flex;
+      flex-direction: column;
+      justify-content: flex-end;
+      align-items: center;
+      text-align: center;
+    }
+
+    .timeline-item-top::after {
+      content: "";
+      display: block;
+      width: 2px;
+      height: 22px;
+      background: #c2410c;
+      margin-top: 6px;
+    }
+
+    .timeline-item-bottom {
+      grid-row: 3;
+      display: flex;
+      flex-direction: column;
+      justify-content: flex-start;
+      align-items: center;
+      text-align: center;
+    }
+
+    .timeline-item-bottom::before {
+      content: "";
+      display: block;
+      width: 2px;
+      height: 22px;
+      background: #c2410c;
+      margin-bottom: 6px;
+    }
+
+    .timeline-year {
+      font-size: 1.55em;
+      font-weight: 700;
+      color: #c2410c;
+      line-height: 1.1;
+      letter-spacing: -0.02em;
+    }
+
+    .timeline-name {
+      font-size: 0.82em;
+      font-weight: 700;
+      color: var(--brand-navy, #183059);
+      margin: 4px 0 2px 0;
+      line-height: 1.2;
+    }
+
+    .timeline-detail {
+      font-size: 0.62em;
+      line-height: 1.3;
+      color: #57606a;
+    }
+  </style>
+</head>
+<body>
+
+  <div class="reveal">
+    <div class="slides">
+      <section data-markdown="slides.md"
+               data-separator="^\r?\n---\r?\n$"
+               data-separator-vertical="^\r?\n--\r?\n$"
+               data-separator-notes="^Note:">
+      </section>
+    </div>
+  </div>
+
+  <!-- Reveal.js JavaScript & Plugins -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/reveal.js/5.1.0/reveal.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/reveal.js/5.1.0/plugin/notes/notes.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/reveal.js/5.1.0/plugin/markdown/markdown.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/reveal.js/5.1.0/plugin/highlight/highlight.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/reveal.js/5.1.0/plugin/math/math.min.js"></script>
+
+  <script>
+    Reveal.initialize({
+      width: 1280,
+      height: 720,
+      margin: 0.08,
+      controls: true,
+      progress: true,
+      center: true,
+      hash: true,
+      history: true,
+      slideNumber: 'c/t',
+      transition: 'fade',
+      plugins: [ RevealMarkdown, RevealHighlight, RevealNotes, RevealMath.KaTeX ]
+    });
+  </script>
+</body>
+</html>
